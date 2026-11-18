@@ -1,6 +1,6 @@
 # Mauerbrecher
 
-Ein Einzelspieler-Spiel für [Gamehearth](https://github.com/weilers-git/gamehearth), die selbst gehostete Spieleplattform. Man spielt allein am Handy (hochkant) oder am Rechner, auch ohne Verbindung zum Server; Spielstand und Bestleistung hebt die Plattform auf.
+Ein Einzelspieler-Spiel für Gamehearth, die selbst gehostete Spieleplattform. Man spielt allein am Handy (hochkant) oder am Rechner, auch ohne Verbindung zum Server; Spielstand und Bestleistung hebt die Plattform auf.
 
 ## Regeln
 
@@ -60,9 +60,10 @@ In die Bestenliste kommen die Punkte; mehr ist besser. Die Punkte werden gemelde
 
 ### Aufhören und weiterspielen
 
-- Man kann jederzeit aufhören, auch mitten im Level. Beim nächsten Start steht im Menü „Weiterspielen“, und es geht im selben Level mit denselben Punkten, denselben Leben und genau den Steinen weiter, die noch stehen (angeschlagene Steine bleiben angeschlagen).
-- Der Ball liegt dann wieder auf dem Schläger. Extras, die gerade wirkten oder fielen, sind nach dem Wiederkommen weg.
-- Das Spiel speichert nach zerstörten Steinen (höchstens einmal pro Sekunde), nach einem verlorenen Ball, nach jedem Level, beim Pausieren und wenn man die App verlässt.
+- Man kann jederzeit aufhören, auch mitten im Level. Beim nächsten Start steht im Menü „Weiterspielen“, und es geht genau dort weiter: selbes Level, dieselben Punkte und Leben, genau die Steine, die noch stehen (angeschlagene bleiben angeschlagen), die Bälle an derselben Stelle und in derselben Richtung, der Schläger an seinem Platz, laufende Extras mit ihrer Restzeit und Extras, die gerade fallen.
+- Ein Ball, der beim Aufhören schon unter dem Schläger war, fällt also auch nach dem Wiederkommen heraus.
+- Ändert sich ein Level, während jemand darin aufgehört hat (siehe „Level ändern“), beginnt dieses Level beim Weiterspielen neu; Punkte und Leben bleiben.
+- Das Spiel speichert nach zerstörten Steinen (höchstens einmal pro Sekunde), nach einem verlorenen Ball, nach jedem Level, beim Pausieren und wenn man die App verlässt, jeweils nur, wenn sich etwas geändert hat.
 - Verlässt man die App oder wechselt in ein anderes Fenster, hält das Spiel von selbst an.
 - „Neues Spiel“ fragt nach, bevor ein laufender Stand verloren geht.
 - Nach dem Spielende und nach dem Sieg beginnt das nächste Spiel wieder bei Level 1.
@@ -78,7 +79,6 @@ Diese Punkte standen nicht in der Beschreibung; ich habe sie so entschieden. Wen
 - Der Schläger folgt der Bewegung des Fingers, nicht seiner Position. Man kann den Finger also irgendwo hinlegen und verdeckt den Ball nicht.
 - Punkte gibt es pro Treffer (10), nicht pro ganzem Stein. Für geschaffte Level gibt es keinen Extra-Bonus.
 - Extras fallen aus etwa 15 % der zerbrochenen Steine, höchstens 3 gleichzeitig. BREIT wirkt 20 Sekunden, LANGSAM 15 Sekunden (Bälle 40 % langsamer).
-- Beim Weiterspielen nach einer Unterbrechung liegt der Ball auf dem Schläger, statt mitten im Flug weiterzufliegen.
 - Fliegt ein Ball 12 Sekunden lang herum, ohne den Schläger oder einen zerbrechlichen Stein zu berühren (etwa zwischen grauen Steinen), bekommt er einen kleinen Schubs in eine neue Richtung, damit nichts hängen bleibt.
 
 ## Ausprobieren
@@ -95,6 +95,21 @@ Dann http://localhost:5180 öffnen. Dort steht das Spiel in einem Handy-Rahmen, 
 ## Level ändern
 
 Die 10 Level stehen als Textraster in `src/levels.ts`, jede Reihe genau 10 Zeichen, höchstens 12 Reihen: `.` frei, `1` grün, `2` gelb, `3` rot, `#` grau. Die Tests prüfen, dass jeder zerbrechliche Stein für den Ball erreichbar ist und dass ein Computer-Spieler jedes Level schafft.
+
+## Aufbau
+
+| Pfad | Inhalt |
+|---|---|
+| `src/levels.ts` | die 10 Level als Textraster und ihre Prüfung |
+| `src/play.ts` | die ganze Bewegung ohne Phaser: Ball, Schläger, Steine, Extras, Leben, Level geschafft; ein Schritt pro Bild (`step`) |
+| `src/rules.ts` | Spielstand lesen und schreiben (`readSave`, `runAt`, `afterLevel`), Punkte pro Treffer |
+| `client/src/main.ts` | verbindet das Spiel mit der Plattform (`connectSolo`), Menü, Speichern und Melden der Punkte |
+| `client/src/scene.ts` | zeichnet die Welt aus `src/play.ts` mit Phaser 4 (keine Phaser-Physik) |
+| `client/src/controls.ts` | Finger ziehen und Tippen auf dem Spielfeld, Pfeiltasten, A/D, Leertaste, P/Esc |
+| `client/src/view.ts` | Texte, Menüs und Tasten ohne Phaser und ohne Browser |
+| `test/` | Tests für Level, Bewegung, Spielstand und Texte; ein Computer-Spieler schafft jedes Level |
+
+Die Tabelle in `AGENTS.md` beschreibt das Beispiel der Vorlage, nicht dieses Spiel; maßgeblich ist diese hier.
 
 ## Entwickeln
 

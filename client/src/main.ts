@@ -24,6 +24,29 @@ async function start(): Promise<void> {
     let paused = true;
     let screen: MenuScreen = { kind: "start", run: save.run };
     let saveTimer: ReturnType<typeof setTimeout> | undefined;
+    let stored = JSON.stringify(save);
+
+    const store = async (next: Save) => {
+      save = next;
+      const text = JSON.stringify(next);
+      if (text === stored) {
+        return;
+      }
+      try {
+        await game.save(next);
+        stored = text;
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    const report = async (score: number) => {
+      try {
+        await game.record("punkte", score);
+      } catch (error) {
+        console.error(error);
+      }
+    };
 
     const field = byId("field");
     const menu = byId("menu");
@@ -37,10 +60,7 @@ async function start(): Promise<void> {
     const persist = async () => {
       clearTimeout(saveTimer);
       saveTimer = undefined;
-      if (world !== undefined && world.phase === "playing") {
-        save = { format: 1, run: runFromWorld(world) };
-      }
-      await game.save(save);
+      await store(world !== undefined && world.phase === "playing" ? { format: 1, run: runFromWorld(world) } : save);
     };
 
     const persistSoon = () => {
@@ -99,9 +119,9 @@ async function start(): Promise<void> {
     };
 
     const startNew = async () => {
-      save = { format: 1, run: newRun() };
-      await game.save(save);
-      play(save.run as Run);
+      const run = newRun();
+      await store({ format: 1, run });
+      play(run);
     };
 
     const pauseGame = () => {
@@ -118,9 +138,8 @@ async function start(): Promise<void> {
       paused = true;
       controls.enabled = false;
       const next = afterLevel(done.level, done.score, done.lives);
-      save = { format: 1, run: next };
-      await game.save(save);
-      await game.record("punkte", done.score);
+      await report(done.score);
+      await store({ format: 1, run: next });
       showMenu(next === null ? { kind: "won", score: done.score, best: game.best.punkte } : { kind: "cleared", level: done.level, score: done.score });
     };
 
@@ -129,9 +148,8 @@ async function start(): Promise<void> {
       saveTimer = undefined;
       paused = true;
       controls.enabled = false;
-      save = freshSave();
-      await game.save(save);
-      await game.record("punkte", done.score);
+      await report(done.score);
+      await store(freshSave());
       showMenu({ kind: "over", score: done.score, best: game.best.punkte });
     };
 
@@ -170,7 +188,7 @@ async function start(): Promise<void> {
           break;
         case "neu-sicher":
           if (run !== null) {
-            await game.record("punkte", run.score);
+            await report(run.score);
           }
           await startNew();
           break;

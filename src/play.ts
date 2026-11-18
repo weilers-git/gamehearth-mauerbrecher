@@ -123,12 +123,77 @@ export function createWorld(run: Run): World {
     phase: "playing",
     events: [],
   };
-  world.balls.push(restingBall(world));
+  if (!restoreMotion(world, run.motion)) {
+    world.balls.push(restingBall(world));
+  }
   return world;
 }
 
+function finite(value: unknown, min: number, max: number): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value >= min && value <= max;
+}
+
+function restoreMotion(world: World, motion: unknown): boolean {
+  if (motion === null || typeof motion !== "object") {
+    return false;
+  }
+  const raw = motion as Record<string, unknown>;
+  const balls = raw["balls"];
+  const falling = raw["falling"];
+  if (
+    !finite(raw["paddleX"], wall, width - wall) ||
+    !finite(raw["wideLeft"], 0, wideMs) ||
+    !finite(raw["slowLeft"], 0, slowMs) ||
+    !finite(raw["calm"], 0, calmLimitMs * 2) ||
+    !Array.isArray(balls) ||
+    balls.length < 1 ||
+    balls.length > maxBalls ||
+    !Array.isArray(falling) ||
+    falling.length > maxFalling
+  ) {
+    return false;
+  }
+  const restoredBalls: Ball[] = [];
+  for (const ball of balls as unknown[]) {
+    const entry = ball !== null && typeof ball === "object" ? (ball as Record<string, unknown>) : {};
+    if (!finite(entry["x"], 0, width) || !finite(entry["y"], 0, height) || !finite(entry["dx"], -1, 1) || !finite(entry["dy"], -1, 1) || typeof entry["resting"] !== "boolean") {
+      return false;
+    }
+    restoredBalls.push({ x: entry["x"], y: entry["y"], dx: entry["dx"], dy: entry["dy"], resting: entry["resting"] });
+  }
+  const restoredFalling: Falling[] = [];
+  for (const extra of falling as unknown[]) {
+    const entry = extra !== null && typeof extra === "object" ? (extra as Record<string, unknown>) : {};
+    const kind = entry["kind"];
+    if (typeof kind !== "string" || !(extraKinds as readonly string[]).includes(kind) || !finite(entry["x"], 0, width) || !finite(entry["y"], 0, height)) {
+      return false;
+    }
+    restoredFalling.push({ kind: kind as ExtraKind, x: entry["x"], y: entry["y"] });
+  }
+  world.paddleX = raw["paddleX"];
+  world.wideLeft = raw["wideLeft"];
+  world.slowLeft = raw["slowLeft"];
+  world.calm = raw["calm"];
+  world.balls = restoredBalls;
+  world.falling = restoredFalling;
+  return true;
+}
+
 export function runFromWorld(world: World): Run {
-  return { level: world.level, score: world.score, lives: world.lives, bricks: gridText(world.bricks) };
+  return {
+    level: world.level,
+    score: world.score,
+    lives: world.lives,
+    bricks: gridText(world.bricks),
+    motion: {
+      paddleX: world.paddleX,
+      balls: world.balls.map((ball) => ({ x: ball.x, y: ball.y, dx: ball.dx, dy: ball.dy, resting: ball.resting })),
+      falling: world.falling.map((extra) => ({ kind: extra.kind, x: extra.x, y: extra.y })),
+      wideLeft: world.wideLeft,
+      slowLeft: world.slowLeft,
+      calm: world.calm,
+    },
+  };
 }
 
 function aim(ball: Ball, angle: number): void {

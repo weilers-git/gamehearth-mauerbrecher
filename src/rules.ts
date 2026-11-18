@@ -4,11 +4,21 @@ export const levelCount = levels.length;
 export const startLives = 3;
 export const pointsPerHit = 10;
 
+export interface Motion {
+  paddleX: number;
+  balls: { x: number; y: number; dx: number; dy: number; resting: boolean }[];
+  falling: { kind: string; x: number; y: number }[];
+  wideLeft: number;
+  slowLeft: number;
+  calm: number;
+}
+
 export interface Run {
   level: number;
   score: number;
   lives: number;
   bricks: string;
+  motion?: Motion;
 }
 
 export interface Save {
@@ -83,7 +93,8 @@ export function readSave(raw: unknown): Save {
     return freshSave();
   }
   if (readBricks(run.level, run.bricks) === undefined) {
-    return freshSave();
+    return { format: 1, run: runAt(run.level, run.score, run.lives) };
   }
-  return { format: 1, run: { level: run.level, score: run.score, lives: run.lives, bricks: run.bricks } };
+  const motion = run.motion !== null && typeof run.motion === "object" ? { motion: run.motion } : {};
+  return { format: 1, run: { level: run.level, score: run.score, lives: run.lives, bricks: run.bricks, ...motion } };
 }

@@ -29,7 +29,7 @@ import {
   type Random,
   type World,
 } from "../src/play";
-import { newRun, runAt, startLives } from "../src/rules";
+import { newRun, readSave, runAt, startLives } from "../src/rules";
 
 const idle: Input = { move: 0, dir: 0, launch: false };
 const never: Random = () => 0.99;
@@ -103,7 +103,9 @@ describe("Start eines Levels", () => {
     saved.bricks = saved.bricks.replace("3333333333", "321321321.");
     const world = createWorld(saved);
     expect(world.left).toBe(breakableCount(levels[4]?.cells ?? []) - 1);
-    expect(runFromWorld(world)).toEqual(saved);
+    const { motion, ...rest } = runFromWorld(world);
+    expect(rest).toEqual(saved);
+    expect(motion?.balls).toEqual([expect.objectContaining({ resting: true })]);
   });
 
   it("lehnt Steine ab, die nicht zum Level passen", () => {
@@ -413,5 +415,46 @@ describe("Alle Level lassen sich durchspielen", () => {
     }
     expect(world.phase).toBe("cleared");
     expect(world.score).toBe((levels[index]?.cells ?? []).filter((cell) => cell > 0).reduce((sum, cell) => sum + cell * 10, 0));
+  });
+});
+
+describe("Review: genau da weitermachen", () => {
+  function roundTrip(world: World): World {
+    const save = readSave(JSON.parse(JSON.stringify({ format: 1, run: runFromWorld(world) })));
+    return createWorld(save.run as NonNullable<typeof save.run>);
+  }
+
+  it("hält Bälle, Schläger, laufende und fallende Extras über Speichern und Laden", () => {
+    const world = createWorld(newRun());
+    const random = seeded(7);
+    step(world, 16, { move: 0, dir: 0, launch: true }, random);
+    for (let index = 0; index < 400; index++) {
+      step(world, 16, { move: 0, dir: index % 50 < 25 ? 1 : -1, launch: false }, random);
+    }
+    world.wideLeft = 4000;
+    world.slowLeft = 2500;
+    world.falling.push({ kind: "ball", x: 100, y: 300 });
+    const back = roundTrip(world);
+    for (const key of ["score", "lives", "bricks", "paddleX", "balls", "falling", "wideLeft", "slowLeft", "calm"] as const) {
+      expect(back[key], key).toEqual(world[key]);
+    }
+  });
+
+  it("verliert ein Leben auch dann, wenn der Ball schon unter dem Schläger war, als gespeichert wurde", () => {
+    const world = createWorld(runAt(0, 120, 1));
+    world.balls = [{ x: 180, y: paddleY + 20, dx: 0, dy: 1, resting: false }];
+    const back = roundTrip(world);
+    const events: string[] = [];
+    for (let index = 0; index < 200 && !events.includes("over"); index++) {
+      events.push(...step(back, 16, idle, never).map((event) => event.type));
+    }
+    expect(events).toContain("over");
+  });
+
+  it("legt bei einem Stand ohne oder mit kaputter Bewegung den Ball auf den Schläger", () => {
+    const run = runAt(2, 300, 2);
+    expect(createWorld(run).balls).toEqual([expect.objectContaining({ resting: true })]);
+    const broken = createWorld({ ...run, motion: { paddleX: Number.NaN, balls: [], falling: [], wideLeft: 0, slowLeft: 0, calm: 0 } });
+    expect(broken.balls).toEqual([expect.objectContaining({ resting: true })]);
   });
 });

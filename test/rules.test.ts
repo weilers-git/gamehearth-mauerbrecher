@@ -23,10 +23,10 @@ describe("Spielstand lesen", () => {
     const damaged = bricks.replace("3333333333", "321321321.");
     expect(readSave({ format: 1, run: { level: 4, score: 0, lives: 3, bricks: damaged } }).run?.bricks).toBe(damaged);
     const stronger = bricks.replace("1111111111", "3111111111");
-    expect(readSave({ format: 1, run: { level: 4, score: 0, lives: 3, bricks: stronger } }).run).toBeNull();
+    expect(readSave({ format: 1, run: { level: 4, score: 0, lives: 3, bricks: stronger } }).run).toEqual(runAt(4, 0, 3));
   });
 
-  it("beginnt bei unbekanntem oder kaputtem Stand neu, statt abzustürzen", () => {
+  it("beginnt bei unbekanntem oder kaputtem Stand neu, statt abzustürzen; passen nur die Steine nicht, beginnt das Level neu", () => {
     const good = { level: 0, score: 0, lives: 3, bricks: firstBricks };
     expect(readSave({ format: 2, run: good })).toEqual(freshSave());
     expect(readSave("Level 3")).toEqual(freshSave());
@@ -37,8 +37,8 @@ describe("Spielstand lesen", () => {
     expect(readSave({ format: 1, run: { ...good, score: 1.5 } })).toEqual(freshSave());
     expect(readSave({ format: 1, run: { ...good, lives: 0 } })).toEqual(freshSave());
     expect(readSave({ format: 1, run: { ...good, lives: 4 } })).toEqual(freshSave());
-    expect(readSave({ format: 1, run: { ...good, bricks: 42 } })).toEqual(freshSave());
-    expect(readSave({ format: 1, run: { ...good, bricks: "1111111111" } })).toEqual(freshSave());
+    expect(readSave({ format: 1, run: { ...good, bricks: 42 } })).toEqual({ format: 1, run: runAt(0, 0, 3) });
+    expect(readSave({ format: 1, run: { ...good, bricks: "1111111111" } })).toEqual({ format: 1, run: runAt(0, 0, 3) });
     expect(readSave({ format: 1, run: "Level 3" })).toEqual(freshSave());
   });
 
@@ -83,5 +83,13 @@ describe("Durchgang", () => {
     const text = JSON.stringify(save);
     expect(JSON.parse(text)).toEqual(save);
     expect(text.length).toBeLessThan(400);
+  });
+});
+
+describe("Review: Level geändert", () => {
+  it("beginnt das Level neu, statt den ganzen Durchgang zu verwerfen, wenn die Steine nicht mehr zum Level passen", () => {
+    const run = runAt(2, 860, 3);
+    const changed = { ...run, bricks: `${run.bricks}/${"1".repeat(run.bricks.split("/")[0]?.length ?? 0)}` };
+    expect(readSave({ format: 1, run: changed })).toEqual({ format: 1, run: runAt(2, 860, 3) });
   });
 });
