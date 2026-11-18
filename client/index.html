@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Mauerbrecher</title>
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <header id="bar">
+      <span id="level"></span>
+      <span id="score"></span>
+      <span id="lives" role="img"></span>
+      <button id="pause" type="button" hidden>Pause</button>
+    </header>
+    <div id="field" aria-hidden="true"></div>
+    <section id="menu" hidden aria-labelledby="heading">
+      <h1 id="heading">Mauerbrecher</h1>
+      <p id="message" aria-live="polite"></p>
+      <p id="record"></p>
+      <div id="entries"></div>
+    </section>
+    <p id="fallback" hidden></p>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

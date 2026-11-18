@@ -1,0 +1,44 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - name: Tag und Version vergleichen
+        run: |
+          id=$(node -p "require('./manifest.json').id")
+          name=$(node -p "require('./manifest.json').name")
+          version=$(node -p "require('./manifest.json').version")
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME passt nicht zur Version $version in manifest.json"
+            exit 1
+          fi
+          echo "GAME_ID=$id" >> "$GITHUB_ENV"
+          echo "GAME_NAME=$name" >> "$GITHUB_ENV"
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run pack
+      - name: Release mit Paket anlegen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          file="dist/$GAME_ID-$VERSION.zip"
+          sum=$(sha256sum "$file" | cut -d' ' -f1)
+          size=$(stat -c %s "$file")
+          gh release create "$GITHUB_REF_NAME" "$file" \
+            --title "$GAME_NAME $VERSION" \
+            --notes "Spielpaket für Gamehearth. Größe $size Bytes, SHA-256 $sum. In einen Katalog mit: npx gamehearth catalog add catalog.json https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/$GAME_ID-$VERSION.zip"
