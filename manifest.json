@@ -3,6 +3,7 @@
   "name": "Mauerbrecher",
   "version": "0.1.0",
   "description": "Mit dem Schläger einen Ball gegen eine Mauer aus Steinen schießen und sie in 10 Leveln zerschlagen",
+  "repository": "https://github.com/weilers-git/gamehearth-mauerbrecher",
   "sdk": "^0.1.2",
   "license": {
     "code": "MIT",

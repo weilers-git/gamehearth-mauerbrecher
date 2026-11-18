@@ -1,6 +1,6 @@
 # Mauerbrecher
 
-Ein Einzelspieler-Spiel für [Gamehearth](https://github.com/weilers-git/gamehearth-starter), die selbst gehostete Spieleplattform. Man spielt allein am Handy (hochkant) oder am Rechner, auch ohne Verbindung zum Server; Spielstand und Bestleistung hebt die Plattform auf.
+Ein Einzelspieler-Spiel für [Gamehearth](https://github.com/weilers-git/gamehearth), die selbst gehostete Spieleplattform. Man spielt allein am Handy (hochkant) oder am Rechner, auch ohne Verbindung zum Server; Spielstand und Bestleistung hebt die Plattform auf.
 
 ## Regeln
 
