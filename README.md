@@ -120,7 +120,7 @@ Dieses Spiel lässt sich gut mit einem KI-Agenten (Claude Code, Cursor, Copilot 
 | `npm run dev` | startet das Spiel lokal im Browser, mit Einblick in Spielstand und Bestwerte |
 | `npm test` | Tests |
 | `npm run typecheck` | Typprüfung |
-| `npm run check` | prüft das Spiel wie die Plattform |
+| `npm run check` | prüft das Spiel wie die Plattform; trägt neue Bestwert-Namen in `ids.lock` ein (gehört ins Repo) |
 | `npm run pack` | baut das Spielpaket für einen Katalog |
 
 ## Lizenz

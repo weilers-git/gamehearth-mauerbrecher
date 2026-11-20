@@ -1,0 +1,9 @@
+{
+  "format": 1,
+  "hinweis": "Von gamehearth check gepflegt. Jede ID, die hier steht, bleibt für immer im Spiel (in manifest.json, notfalls mit \"deprecated\": true). Von Hand entfernen darf man nur IDs, die nie veröffentlicht wurden.",
+  "items": [],
+  "stats": [
+    "punkte"
+  ],
+  "flags": []
+}
